@@ -4,10 +4,10 @@ using System.IO;
 
 namespace com.wibblr.b2
 {
-    [DataContract] internal class Credentials
+    internal class Credentials
     {
-        [DataMember] internal string accountId;
-        [DataMember] internal string applicationKey;
+        public string accountId;
+        public string applicationKey;
 
         internal static Credentials Read()
         {

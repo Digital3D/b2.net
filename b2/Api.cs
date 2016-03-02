@@ -11,24 +11,23 @@ namespace com.wibblr.b2
 {
     public class Api
     {
-        static internal Tuple<long, Stream> ToJson(object o)
+        static internal Stream ToJson(object o)
         {
             var stream = new MemoryStream();
             new DataContractJsonSerializer(o.GetType()).WriteObject(stream, o);
-            var length = stream.Position;
             stream.Seek(0, 0);
-            return new Tuple<long, Stream>(length, stream);
+            return stream;
         }
 
         //-------------------------------------------------------------------
         // AuthorizeAccount
         //-------------------------------------------------------------------
-        [DataContract] public class AuthorizeAccountResponse
+        public class AuthorizeAccountResponse
         {
-            [DataMember] public string accountId;
-            [DataMember] public string authorizationToken;
-            [DataMember] public string apiUrl;
-            [DataMember] public string downloadUrl;
+            public string accountId;
+            public string authorizationToken;
+            public string apiUrl;
+            public string downloadUrl;
 
             static internal AuthorizeAccountResponse FromJson(Stream s) =>
                 new DataContractJsonSerializer(typeof(AuthorizeAccountResponse)).ReadObject(s) as AuthorizeAccountResponse;
@@ -37,25 +36,25 @@ namespace com.wibblr.b2
         //-------------------------------------------------------------------
         // ListBuckets
         //-------------------------------------------------------------------
-        [DataContract] public class ListBucketsRequest
+        public class ListBucketsRequest
         {
-            [DataMember] public string accountId;
+            public string accountId;
         }
 
-        [DataContract] public class ListBucketsResponse
+        public class ListBucketsResponse
         {
-            [DataMember] public IList<Bucket> buckets;
+            public IList<Bucket> buckets;
 
             static internal ListBucketsResponse FromJson(Stream s) =>
                 new DataContractJsonSerializer(typeof(ListBucketsResponse)).ReadObject(s) as ListBucketsResponse;
         }
 
-        [DataContract] public class Bucket
+        public class Bucket
         {
-            [DataMember] public string accountId;
-            [DataMember] public string bucketId;
-            [DataMember] public string bucketName;
-            [DataMember] public string bucketType;
+            public string accountId;
+            public string bucketId;
+            public string bucketName;
+            public string bucketType;
         }
     }
 }

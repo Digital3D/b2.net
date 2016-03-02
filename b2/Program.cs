@@ -77,16 +77,15 @@ namespace com.wibblr.b2
             {
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authorizationToken);
 
-                var json = Api.ToJson(new Api.ListBucketsRequest { accountId = accountId });
-
-                var content = new StreamContent(json.Item2);
+                var requestStream = Api.ToJson(new Api.ListBucketsRequest { accountId = accountId });
+                var content = new StreamContent(requestStream);
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                content.Headers.ContentLength = json.Item1;
+                content.Headers.ContentLength = requestStream.Length;
                 
                 var response = await client.PostAsync($"{apiUrl}/b2api/v1/b2_list_buckets", content).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
-                var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-                return Api.ListBucketsResponse.FromJson(stream);
+                var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                return Api.ListBucketsResponse.FromJson(responseStream);
             }
         }
     }
