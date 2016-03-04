@@ -52,7 +52,7 @@
     <Compile Include="Credentials.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="JsonSchema.cs" />
-    <Compile Include="B2.cs" />
+    <Compile Include="B2Http.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

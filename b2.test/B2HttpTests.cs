@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace com.wibblr.b2
 {
     [TestFixture]
-    public class B2Tests
+    public class b2httpTests
     {
         private string bucketName = "asdjkhaskjdfhajksdfhakjsdfh";
         private Credentials credentials;
@@ -27,8 +27,8 @@ namespace com.wibblr.b2
         [Test]
         public async Task Authorize()
         {
-            var b2 = new B2();
-            var authorizationResponse = await b2.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
+            var b2http = new B2Http();
+            var authorizationResponse = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
 
             Assert.IsTrue(authorizationResponse.apiUrl.EndsWith("backblaze.com"));
             Assert.Greater(authorizationResponse.authorizationToken.Length, 0);
@@ -37,19 +37,19 @@ namespace com.wibblr.b2
         [Test]
         public async Task CreateBucket()
         {
-            var b2 = new B2();
-            var authorizationResponse = await b2.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
-            var createBucketResponse = await b2.CreateBucket(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId, bucketName, "allPrivate");
+            var b2http = new B2Http();
+            var authorizationResponse = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
+            var createBucketResponse = await b2http.CreateBucket(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId, bucketName, "allPrivate");
         }
 
         [Test]
         public async Task DeleteBucket()
         {
-            var b2 = new B2();
-            var authorizationResponse = await b2.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
-            var listBucketsResponse = await b2.ListBuckets(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId);
+            var b2http = new B2Http();
+            var authorizationResponse = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
+            var listBucketsResponse = await b2http.ListBuckets(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId);
             var bucketId = listBucketsResponse.buckets.First(b => b.bucketName == bucketName).bucketId;
-            var deleteBucketResponse = await b2.DeleteBucket(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId, bucketId);
+            var deleteBucketResponse = await b2http.DeleteBucket(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId, bucketId);
         }
 
         /// <summary>
@@ -58,9 +58,9 @@ namespace com.wibblr.b2
         [Test]
         public async Task ListBuckets()
         {
-            var b2 = new B2();
-            var authorizationResponse = await b2.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
-            var listBucketsResponse = await b2.ListBuckets(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId);
+            var b2http = new B2Http();
+            var authorizationResponse = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
+            var listBucketsResponse = await b2http.ListBuckets(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId);
             var bucket = listBucketsResponse.buckets.FirstOrDefault(b => b.bucketName == bucketName);
             Assert.IsNotNull(bucket);
         }
@@ -71,13 +71,13 @@ namespace com.wibblr.b2
         [Test]
         public async Task UploadFile()
         {
-            var b2 = new B2();
-            var authorizationResponse = await b2.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
-            var listBucketsResponse = await b2.ListBuckets(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId);
+            var b2http = new B2Http();
+            var authorizationResponse = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
+            var listBucketsResponse = await b2http.ListBuckets(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId);
             var bucketId = listBucketsResponse.buckets.First(b => b.bucketName == bucketName).bucketId;
-            var getUploadUrlResponse = await b2.GetUploadUrl(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, bucketId);
+            var getUploadUrlResponse = await b2http.GetUploadUrl(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, bucketId);
 
-            var uploadFileResponse = await b2.UploadFile(
+            var uploadFileResponse = await b2http.UploadFile(
                 getUploadUrlResponse.uploadUrl,
                 getUploadUrlResponse.authorizationToken,
                 "hello.txt",
@@ -94,15 +94,15 @@ namespace com.wibblr.b2
         [Test]
         public async Task DownloadFileById()
         {
-            var b2 = new B2();
+            var b2http = new B2Http();
 
-            var authorizationResponse = await b2.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
-            var listBucketsResponse = await b2.ListBuckets(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId);
+            var authorizationResponse = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
+            var listBucketsResponse = await b2http.ListBuckets(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId);
             var bucketId = listBucketsResponse.buckets.First(b => b.bucketName == bucketName).bucketId;
-            var fileNames = await b2.ListFileNames(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, bucketId);
+            var fileNames = await b2http.ListFileNames(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, bucketId);
             var fileId = fileNames.files.First(f => f.fileName == "hello.txt").fileId;
 
-            var file = await b2.DownloadFileById(authorizationResponse.downloadUrl, authorizationResponse.authorizationToken, fileId, null, null);
+            var file = await b2http.DownloadFileById(authorizationResponse.downloadUrl, authorizationResponse.authorizationToken, fileId, null, null);
 
             Assert.AreEqual(12, file.length);
 

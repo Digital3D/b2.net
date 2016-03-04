@@ -9,6 +9,11 @@ using System.Text;
 
 namespace com.wibblr.b2
 {
+    public static class DateTimeExtensions
+    {
+        public static long ToUnixTimeMillis(this DateTime dt) => (dt.Ticks - 621355968000000000) / 10000;
+    }
+
     /// <summary>
     /// Extension methods for String
     /// </summary>

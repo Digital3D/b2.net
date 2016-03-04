@@ -23,20 +23,20 @@ namespace com.wibblr.b2
     }
 
     /// <summary>
-    /// A fully asynchronous .net API for the BackBlaze B2 storage service
+    /// A fully asynchronous .net API for the BackBlaze B2 storage service. This class represents the B2
+    /// HTTP api, i.e. it maps each HTTP method onto a C# method.
     /// </summary>
-    public class B2
+    public class B2Http
     {
         private const string BaseUrl = "https://api.backblaze.com/b2api/v1";
 
-        private HttpClient httpClient = GetClient();
+        private HttpClient httpClient;
 
-        private static HttpClient GetClient()
+        public B2Http()
         {
-            var c = new HttpClient();
-            c.DefaultRequestHeaders.Accept.Clear();
-            c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            return c;
+            httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         /// <summary>
