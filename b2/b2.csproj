@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="B2.cs" />
     <Compile Include="B2Exception.cs" />
     <Compile Include="B2UrlEncoder.cs" />
     <Compile Include="Credentials.cs" />
