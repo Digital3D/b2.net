@@ -6,6 +6,8 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.IO;
 
+using Common.Logging;
+
 namespace com.wibblr.b2
 {
     /// <summary>
@@ -28,6 +30,8 @@ namespace com.wibblr.b2
     /// </summary>
     public class B2Http
     {
+        private ILog log = LogManager.GetLogger("com.wibblr.B2Http");
+
         private const string BaseUrl = "https://api.backblaze.com/b2api/v1";
 
         private HttpClient httpClient;
@@ -47,13 +51,18 @@ namespace com.wibblr.b2
         /// <returns></returns>
         public async Task<AuthorizeAccountResponse> AuthorizeAccount(string accountId, string applicationKey)
         {
+            log.Trace(m => m($"AuthorizeAccount: accountId={accountId}, applicationKey={applicationKey}"));
+
             var request = new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/b2_authorize_account")
                 .WithBasicAuthorization($"{accountId}:{applicationKey}".ToBase64());
 
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
             response.ThrowIfFailure(responseStream);
-            return AuthorizeAccountResponse.FromJson(responseStream);
+
+            var r = AuthorizeAccountResponse.FromJson(responseStream);
+            log.Trace(m => m($"AuthorizeAccount response: accountId={r.accountId}, authorizationToken={r.authorizationToken}, apiUrl={r.apiUrl}, downloadUrl={r.downloadUrl}"));
+            return r;
         }
 
         /// <summary>
@@ -67,6 +76,8 @@ namespace com.wibblr.b2
         /// <returns></returns>
         public async Task<CreateBucketResponse> CreateBucket(string apiUrl, string authorizationToken, string accountId, string bucketName, string bucketType)
         {
+            log.Trace(m => m($"CreateBucket: apiUrl={apiUrl}, authorizationToken={authorizationToken}, accountId={accountId}, bucketName={bucketName}, bucketType={bucketType}"));
+
             var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_create_bucket")
                 .WithAuthorization(authorizationToken)
                 .WithContent(new CreateBucketRequest { accountId = accountId, bucketName = bucketName, bucketType = bucketType });
@@ -74,7 +85,10 @@ namespace com.wibblr.b2
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
             response.ThrowIfFailure(responseStream);
-            return CreateBucketResponse.FromJson(responseStream);
+
+            var r = CreateBucketResponse.FromJson(responseStream);
+            log.Trace(m => m($"CreateBucket response: accountId={r.accountId} bucketId={r.bucketId} bucketName={r.bucketName} bucketType={r.bucketType}"));
+            return r;
         }
 
         /// <summary>
@@ -246,7 +260,7 @@ namespace com.wibblr.b2
                 throw new ArgumentNullException("attributes");
 
             var headers = (attributes.ToDictionary(a => $"X-Bz-Info-{a.Key}", a => a.Value));
-            headers["X-Bz-File-Name"] = fileName;
+            headers["X-Bz-File-Name"] = B2UrlEncoder.Encode(fileName.Replace('\\', '/'));
             headers["Content-Type"] = contentType;
             headers["Content-Length"] = contentLength.ToString();
             headers["X-Bz-Content-Sha1"] = contentSha1;
