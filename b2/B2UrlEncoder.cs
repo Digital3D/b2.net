@@ -6,10 +6,9 @@ using System.Text;
 namespace com.wibblr.b2
 {
     /// <summary>
-    /// Neither Uri.EscapeUriString or Uri.EscapeDataString seem to do the right thing (i.e. they fail on 
-    /// the vendor supplied test cases in url-encoding.json).
+    /// A Url encoder that passes the vendor supplied test cases (see https://www.backblaze.com/b2/docs/string_encoding.html)
     /// 
-    /// This is a custom URL encoder that passes the tests.
+    /// The library functions Uri.EscapeUriString or Uri.EscapeDataString both fail these tests.
     /// </summary>
     public class B2UrlEncoder
     {
@@ -72,23 +71,15 @@ namespace com.wibblr.b2
                     throw new ArgumentException($"Invalid URL encoded string '{s}': non-ascii character at position {i}");
 
                 if (literals.Contains(b))
-                {
                     bytes[pos++] = b;
-                }
                 else if (c == '+') // special case
-                {
                     bytes[pos++] = (byte)' ';
-                }
                 else
                 {
                     if (c != '%')
-                    {
                         throw new ArgumentException($"Invalid URL encoded string '{s}': expected '%' at position {i}");
-                    }
                     if ((i + 2) >= len)
-                    {
                         throw new ArgumentException($"Invalid URL encoded string '{s}': last encoded character is truncated");
-                    }
                     var upperNybble = DecodeHexDigit(s[++i]);
                     var lowerNybble = DecodeHexDigit(s[++i]);
                     bytes[pos++] = (byte)((upperNybble * 16) + lowerNybble);
@@ -97,5 +88,4 @@ namespace com.wibblr.b2
             return Encoding.UTF8.GetString(bytes, 0, pos);
         }
     }
-
 }

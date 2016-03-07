@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.Serialization.Json;
@@ -9,8 +8,16 @@ using System.Text;
 
 namespace com.wibblr.b2
 {
+    /// <summary>
+    /// Extension methods for DateTime
+    /// </summary>
     public static class DateTimeExtensions
     {
+        /// <summary>
+        /// Convert a UTC DateTime to a Unix/Java timestamp (i.e. milliseconds since 1970)
+        /// </summary>
+        /// <param name="dt"></param>
+        /// <returns></returns>
         public static long ToUnixTimeMillis(this DateTime dt) => (dt.Ticks - 621355968000000000) / 10000;
     }
 
@@ -111,36 +118,6 @@ namespace com.wibblr.b2
             if (lower.HasValue && upper.HasValue)
                 message.Headers.Add("Range", $"bytes={lower.Value}-{upper.Value}");
             return message;
-        }
-    }
-
-    /// <summary>
-    /// Extension methods for HttpResponseMessage
-    /// </summary>
-    public static class HttpResponseMessageExtensions
-    {
-        /// <summary>
-        /// Check the HTTP status code. If not 200 (OK), then throw an exception.
-        /// If there is a JSON-encoded failure message in the response body, use
-        /// that in the exception
-        /// </summary>
-        /// <param name="response">The response message to check</param>
-        /// <param name="body">Stream containing the body of the response. This will be
-        /// read only if the response status code is not 200 (OK)</param>
-        public static void ThrowIfFailure(this HttpResponseMessage response, Stream body)
-        {
-            if (response.StatusCode != HttpStatusCode.OK)
-            {
-                try
-                {
-                    var f = FailureResponse.FromJson(body);
-                    throw new B2Exception(f.status, f.code, f.message);
-                }
-                catch (Exception e)
-                {
-                    throw new B2Exception(Convert.ToInt32(response.StatusCode), null, e.Message);
-                }
-            }
         }
     }
 }

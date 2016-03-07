@@ -45,6 +45,10 @@ namespace com.wibblr.b2
             credentials = Credentials.Read(new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName);
         }
 
+        /// <summary>
+        /// Very simple test that calls all the HTTP methods at least once
+        /// </summary>
+        /// <returns></returns>
         [Test]
         public async Task AllMethods()
         {
@@ -55,27 +59,76 @@ namespace com.wibblr.b2
             Assert.IsTrue(ar.apiUrl.EndsWith("backblaze.com"));
             Assert.Greater(ar.authorizationToken.Length, 0);
 
-            // List buckets; delete the test bucket if it exists
+            // List buckets; delete all the files in the test bucket, and then the bucket itself, if it exists
             var lbr = await b2http.ListBuckets(ar.apiUrl, ar.authorizationToken, ar.accountId);
             var bucket = lbr.buckets.FirstOrDefault(b => b.bucketName == bucketName);
             if (bucket != null)
             {
+                var lfvr = await b2http.ListFileVersions(ar.apiUrl, ar.authorizationToken, bucket.bucketId);
+                foreach (var f in lfvr.files)
+                    await b2http.DeleteFileVersion(ar.apiUrl, ar.authorizationToken, f.fileName, f.fileId);
+
                 await b2http.DeleteBucket(ar.apiUrl, ar.authorizationToken, ar.accountId, bucket.bucketId);
             }
 
             // Create bucket
             var cbr = await b2http.CreateBucket(ar.apiUrl, ar.authorizationToken, ar.accountId, bucketName, "allPrivate");
 
-            // Get upload Url
+            // List buckets (again)
+            var lbr2 = await b2http.ListBuckets(ar.apiUrl, ar.authorizationToken, ar.accountId);
+            var bucketId = lbr2.buckets.First(b => b.bucketName == bucketName).bucketId;
 
+            // Get upload Url
+            var guur = await b2http.GetUploadUrl(ar.apiUrl, ar.authorizationToken, bucketId);
 
             // Upload file
+            await b2http.UploadFile(
+                guur.uploadUrl,
+                guur.authorizationToken,
+                "hello.txt",
+                "text/plain",
+                12,
+                "430ce34d020724ed75a196dfc2ad67c77772d169",
+                new Dictionary<string, string> { { "asdf", "qwer" } },
+                new MemoryStream(Encoding.UTF8.GetBytes("hello world!")));
+
+            // Upload another version of file
+            await b2http.UploadFile(
+                guur.uploadUrl,
+                guur.authorizationToken,
+                "hello.txt",
+                "text/plain",
+                19,
+                "81b716c0e4e892836ff2ba9f98c7f00aac0c7656",
+                new Dictionary<string, string> { { "zxcv", "uiop" } },
+                new MemoryStream(Encoding.UTF8.GetBytes("hello again, world!")));
 
             // List file names
+            var lfnr = await b2http.ListFileNames(ar.apiUrl, ar.authorizationToken, bucketId);
+            Assert.AreEqual(1, lfnr.files.Count);
+            Assert.AreEqual("upload", lfnr.files.First().action);
+            Assert.AreEqual(19, lfnr.files.First().size);
 
-            // Download file
+            // List file versions. Sort order is (name, uploadtime DESC)
+            var lfv2 = await b2http.ListFileVersions(ar.apiUrl, ar.authorizationToken, bucketId);
+            Assert.AreEqual(2, lfv2.files.Count);
+            Assert.AreEqual(19, lfv2.files.First().size);
+            Assert.AreEqual(12, lfv2.files.Last().size);
+
+            // GetFileInfo
+            var gfi = await b2http.GetFileInfo(ar.apiUrl, ar.authorizationToken, lfv2.files.First().fileId);
+            Assert.AreEqual(19, gfi.contentLength);
+
+            // Download file by ID
+
+            // Download file by name
+
+            // Hide File
+
+            // UpdateBucket
 
             // Delete bucket
+            await b2http.DeleteBucket(ar.apiUrl, ar.authorizationToken, ar.accountId, bucket.bucketId);
 
         }
 

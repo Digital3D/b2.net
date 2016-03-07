@@ -272,9 +272,10 @@ namespace com.wibblr.b2
     {
         public string fileId;
         public string fileName;
-        public long contentLength;
-        public string contentSha1;
-        public Dictionary<string, string> fileInfo;
+        // TODO: Not yet implemented
+        // public long contentLength;
+        // public string contentSha1;
+        // public Dictionary<string, string> fileInfo;
         public string action;
         public long size;
         public string uploadTimestamp;
@@ -293,8 +294,8 @@ namespace com.wibblr.b2
 
     public class ListFileVersionsResponse : B2Response
     {
-        public IList<File> file;
-        public string nestFileName;
+        public IList<File> files;
+        public string nextFileName;
         public string nextFileId;
 
         static internal ListFileVersionsResponse FromJson(Stream s) =>
