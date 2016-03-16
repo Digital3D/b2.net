@@ -29,12 +29,12 @@ namespace com.wibblr.b2
             length = Convert.ToInt64(contentHeaders.ContentLength);
             contentType = contentHeaders.ContentType.MediaType;
 
-            foreach (var h in headers)
+            foreach (var h in headers.Select(x => new { key = x.Key.ToLower(), value = x.Value.First() }))
             {
-                if (h.Key.Equals("X-Bz-File-Id", StringComparison.OrdinalIgnoreCase)) id = h.Value.First();
-                if (h.Key.Equals("X-Bz-File-Name", StringComparison.OrdinalIgnoreCase)) name = h.Value.First();
-                if (h.Key.Equals("X-Bz-Content-Sha1", StringComparison.OrdinalIgnoreCase)) sha1 = h.Value.First();
-                if (h.Key.StartsWith("X-Bz-Info-", StringComparison.OrdinalIgnoreCase)) attributes[h.Key.Substring("X-Bz-Info-".Length)] = h.Value.First();
+                if (h.key == "x-bz-file-id") id = h.value;
+                if (h.key == "x-bz-file-name") name = h.value;
+                if (h.key == "x-bz-content-sha1") sha1 = h.value;
+                if (h.key.StartsWith("x-bz-info-")) attributes[h.key.Substring("X-Bz-Info-".Length)] = h.value;
             }
         }
     }
