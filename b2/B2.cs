@@ -44,22 +44,29 @@ namespace com.wibblr.b2
             }
         }
 
-        public async Task UploadFile(string sourcePath, string destinationPath, string contentType = "text/plain")
+        public async Task UploadFile(string sourcePath, string destinationPath, string contentType = "text/plain", IProgress<StreamProgress> checksumProgress = null, IProgress<StreamProgress> uploadProgress = null)
         {
             // Ensure the file cannot be altered whilst being uploaded.
-            using (var fs = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var qs = new ProgressReportingStream(new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
             {
                 // The B2 HTTP api requires the SHA1 checksum before uploading; this means the file must be
                 // read twice, doh!
                 var e = new B2UrlEncoder();
 
-                var sha1bytes = SHA1.Create().ComputeHash(fs);
+                var shaTask = Task.Run(() => SHA1.Create().ComputeHash(qs));
+                if (checksumProgress != null)
+                    while (await Task.WhenAny(shaTask, Task.Delay(100)) != shaTask)
+                        checksumProgress.Report(qs.Progress());
+
+                await shaTask;
+                checksumProgress.Report(qs.Progress());
+
                 var sha1hex = new StringBuilder(40);
 
-                foreach (var b in sha1bytes)
+                foreach (var b in shaTask.Result)
                     sha1hex.Append(b.ToString("X2"));
 
-                fs.Position = 0;
+                qs.Position = 0;
 
                 var getUploadUrlResponse = await b2api.GetUploadUrl(ApiUrl, AuthorizationToken, BucketId).ConfigureAwait(false);
 
@@ -69,7 +76,13 @@ namespace com.wibblr.b2
                 var fileInfo = new FileInfo(sourcePath);
                 attributes["last_modified_millis"] = fileInfo.LastWriteTimeUtc.ToUnixTimeMillis().ToString();
 
-                await b2api.UploadFile(url, getUploadUrlResponse.authorizationToken, destinationPath, contentType, fileInfo.Length, sha1hex.ToString(), attributes, fs);
+                var uploadFileTask = b2api.UploadFile(url, getUploadUrlResponse.authorizationToken, destinationPath, contentType, fileInfo.Length, sha1hex.ToString(), attributes, qs);
+                if (uploadProgress != null)
+                    while (await Task.WhenAny(uploadFileTask, Task.Delay(100)) != uploadFileTask)
+                        uploadProgress.Report(qs.Progress());
+
+                await uploadFileTask;
+                checksumProgress.Report(qs.Progress());
             }
         }
     }
