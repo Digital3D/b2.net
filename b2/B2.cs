@@ -59,7 +59,8 @@ namespace com.wibblr.b2
                         checksumProgress.Report(qs.Progress());
 
                 await shaTask;
-                checksumProgress.Report(qs.Progress());
+                if (checksumProgress != null)
+                    checksumProgress.Report(qs.Progress());
 
                 var sha1hex = new StringBuilder(40);
 
@@ -82,7 +83,8 @@ namespace com.wibblr.b2
                         uploadProgress.Report(qs.Progress());
 
                 await uploadFileTask;
-                checksumProgress.Report(qs.Progress());
+                if (uploadProgress != null)
+                    uploadProgress.Report(qs.Progress());
             }
         }
     }
