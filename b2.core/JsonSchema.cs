@@ -261,14 +261,14 @@ namespace com.wibblr.b2
 
     public class ListFileNamesResponse : B2Response
     {
-        public IList<File> files;
+        public IList<B2FileMetadata> files;
         public string nextFileName;
 
         static internal ListFileNamesResponse FromJson(Stream s) =>
             new DataContractJsonSerializer(typeof(ListFileNamesResponse)).ReadObject(s) as ListFileNamesResponse;
     }
 
-    public class File
+    public class B2FileMetadata
     {
         public string fileId;
         public string fileName;
@@ -294,7 +294,7 @@ namespace com.wibblr.b2
 
     public class ListFileVersionsResponse : B2Response
     {
-        public IList<File> files;
+        public IList<B2FileMetadata> files;
         public string nextFileName;
         public string nextFileId;
 

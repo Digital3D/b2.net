@@ -73,7 +73,7 @@ namespace com.wibblr.b2
         /// </summary>
         /// <param name="f"></param>
         /// <returns></returns>
-        private string ToString(File f) =>
+        private string ToString(B2FileMetadata f) =>
             $"{{fileId={f.fileId}, fileName={f.fileName}, action={f.action}, size={f.size}, uploadTimestamp={f.uploadTimestamp}}}";
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace com.wibblr.b2
         /// </summary>
         /// <param name="files"></param>
         /// <returns></returns>
-        private string ToString(IEnumerable<File> files) => $"[{string.Join(",", files.Select(ToString))}]";
+        private string ToString(IEnumerable<B2FileMetadata> files) => $"[{string.Join(",", files.Select(ToString))}]";
 
         /// <summary>
         ///  Convert a Dictionary object to a string suitable for logging
