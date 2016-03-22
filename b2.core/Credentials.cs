@@ -6,44 +6,68 @@ namespace com.wibblr.b2
 {
     public class Credentials
     {
-        public string accountId;
-        public string applicationKey;
+        // These fields are serialized into JSON
+        public string accountId = "";
+        public string applicationKey = "";
+
+        public static string DefaultCredentialsPath() => Path.Combine(Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%"), ".b2.net", "credentials.json");
 
         /// <summary>
         /// Read the credentials for the b2 service from the disk file 'credentials.json'.
         /// This should look like this:
         /// <code>
-        /// {
-        ///     "accountId": "3248833834",
-        ///     "applicationKey": "29319230812931920381092381023289"
-        /// }
+        /// {"accountId":"3248833834","applicationKey":"29319230812931920381092381023289"}
         /// </code>
         /// </summary>
-        /// <param name="directory">Directory from which to read credentials. Defaults to the file ~\.cwb2\credentials.json</param>
+        /// <param name="path">File from which to read credentials. Defaults to ~\.b2.net\credentials.json</param>
         /// <returns>Credentials object</returns>
-        internal static Credentials Read(string directory = null)
+        public static Credentials Read(string path = null)
         {
-            if (directory == null)
-            {
-                directory = Path.Combine(Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%"), ".cwb2"); // NOTE: currently works only on Windows.
-            }
-
-            var credentialsFile = Path.Combine(directory, "credentials.json");
+            var f = path ?? DefaultCredentialsPath();
             try
             {
-                using (var s = new FileStream(credentialsFile, FileMode.Open))
+                using (var s = new FileStream(f, FileMode.Open))
                 {
                     return (Credentials) new DataContractJsonSerializer(typeof(Credentials)).ReadObject(s);
                 }
             }
             catch (IOException ioe)
             {
-                throw new Exception($"Unable to read credentials file {credentialsFile}", ioe);
+                throw new Exception($"Unable to read credentials file {f}", ioe);
             }
             catch (Exception e)
             {
-                throw new Exception($"Error deserializing credentials file {credentialsFile}", e);
+                throw new Exception($"Error deserializing credentials file {f}", e);
             }
+        }
+
+        /// <summary>
+        /// Write a credentials file to disk
+        /// </summary>
+        /// <param name="accountId"></param>
+        /// <param name="applicationKey"></param>
+        /// <param name="path">File to write credentials to. Defaults to ~\.b2.net\credentials.json</param>
+        public static void Write(string accountId, string applicationKey, string path = null)
+        {
+            var f = path ?? DefaultCredentialsPath();
+            var c = new Credentials { accountId = accountId ?? "", applicationKey = applicationKey ?? "" };
+
+            using (var stream = new FileStream(f, FileMode.Create))
+            {
+                new DataContractJsonSerializer(c.GetType()).WriteObject(stream, c);
+            }
+        }
+
+        /// <summary>
+        /// Delete the credentials file from disk
+        /// </summary>
+        /// <param name="path">File to delete. Defaults to ~\.b2.net\credentials.json</param>
+        public static void Delete(string path = null)
+        {
+            var f = path ?? DefaultCredentialsPath();
+
+            if (File.Exists(f))
+                File.Delete(f);
         }
     }
 }

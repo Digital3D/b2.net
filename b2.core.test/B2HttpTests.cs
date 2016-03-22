@@ -1,8 +1,4 @@
-﻿using Common.Logging;
-using Common.Logging.Configuration;
-using Common.Logging.Simple;
-using NUnit.Framework;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,6 +6,12 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
+
+using Common.Logging;
+using Common.Logging.Configuration;
+using Common.Logging.Simple;
+
+using NUnit.Framework;
 namespace com.wibblr.b2
 {
     /// <summary>
@@ -42,7 +44,7 @@ namespace com.wibblr.b2
             properties["dateTimeFormat"] = "yyyy-MM-dd HH:mm:ss.fff";
             LogManager.Adapter = new ConsoleOutLoggerFactoryAdapter(properties);
 
-            credentials = Credentials.Read(new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName);
+            credentials = Credentials.Read(Path.Combine(new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName, "credentials.json"));
         }
 
         /// <summary>
