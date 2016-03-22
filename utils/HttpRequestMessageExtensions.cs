@@ -4,12 +4,12 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.Serialization.Json;
 
-namespace com.wibblr.b2
+namespace com.wibblr.utils
 {
     /// <summary>
     /// Extension methods for HttpRequestMessage
     /// </summary>
-    public static class HttpRequestMessageExtentions
+    public static class HttpRequestMessageExtensions
     {
         /// <summary>
         /// Add a basic authentication request header to the message in a fluent style
@@ -43,7 +43,7 @@ namespace com.wibblr.b2
         /// <param name="message"></param>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public static HttpRequestMessage WithJsonSerializedContent(this HttpRequestMessage message, B2Request obj)
+        public static HttpRequestMessage WithJsonSerializedContent(this HttpRequestMessage message, object obj)
         {
             var stream = new MemoryStream();
             new DataContractJsonSerializer(obj.GetType()).WriteObject(stream, obj);
@@ -93,4 +93,3 @@ namespace com.wibblr.b2
         }
     }
 }
-
