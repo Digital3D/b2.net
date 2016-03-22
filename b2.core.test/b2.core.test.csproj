@@ -58,6 +58,7 @@
     <Compile Include="B2Tests.cs" />
     <Compile Include="BandwidthCalculatorTests.cs" />
     <Compile Include="CredentialsTests.cs" />
+    <Compile Include="FilesystemScannerTests.cs" />
     <Compile Include="StreamProgressCalculatorTests.cs" />
     <Compile Include="AccumulatingCircularBufferTests.cs" />
     <Compile Include="ExtensionMethodsTests.cs" />

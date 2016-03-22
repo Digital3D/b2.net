@@ -31,9 +31,22 @@ namespace com.wibblr.utils
             Directory.CreateDirectory(FullPath);
         }
 
+
         public void Dispose()
         {
             Directory.Delete(FullPath, true);
         }
+
+        /// <summary>
+        /// Create a file int the temporary directory. Name can use forward or backward slashes.
+        /// Parent must pre-exist.
+        /// </summary>
+        public void CreateFile(string name) => File.Create(Path.Combine(FullPath, name.ToNativePath())).Close();
+
+        /// <summary>
+        /// Create a directory int the temporary directory. Name can use forward or backward slashes.
+        /// Parent must pre-exist.
+        /// </summary>
+        public void CreateDir(string name) => Directory.CreateDirectory(Path.Combine(FullPath, name.ToNativePath()));
     }
 }

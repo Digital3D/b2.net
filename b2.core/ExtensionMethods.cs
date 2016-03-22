@@ -22,19 +22,6 @@ namespace com.wibblr.b2
     }
 
     /// <summary>
-    /// Extension methods for String
-    /// </summary>
-    public static class StringExtensions
-    {
-        /// <summary>
-        /// Convert a string to base-64
-        /// </summary>
-        /// <param name="s">String to convert</param>
-        /// <returns>Base-64 representation of the string</returns>
-        public static string ToBase64(this string s) => Convert.ToBase64String(Encoding.UTF8.GetBytes(s));
-    }
-
-    /// <summary>
     /// Extension methods for HttpRequestMessage
     /// </summary>
     public static class HttpRequestMessageExtentions

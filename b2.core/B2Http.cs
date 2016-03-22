@@ -8,6 +8,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
+using com.wibblr.utils;
+
 namespace com.wibblr.b2
 {
     /// <summary>

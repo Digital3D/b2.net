@@ -60,6 +60,7 @@
     <Compile Include="B2.cs" />
     <Compile Include="B2Exception.cs" />
     <Compile Include="B2UrlEncoder.cs" />
+    <Compile Include="FilesystemScanner.cs" />
     <Compile Include="StreamProgressCalculator.cs" />
     <Compile Include="Credentials.cs" />
     <Compile Include="ExtensionMethods.cs" />
@@ -71,6 +72,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\utils\utils.csproj">
+      <Project>{38d86d8b-603e-471e-9a53-c6952e862ff0}</Project>
+      <Name>utils</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
