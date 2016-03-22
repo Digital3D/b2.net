@@ -30,7 +30,7 @@ namespace com.wibblr.b2
         public void Setup()
         {
             var testDataFile = Path.Combine(new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName, "url-encoding.json");
-            using (var s = new FileStream(testDataFile, FileMode.Open))
+            using (var s = new FileStream(testDataFile, FileMode.Open, FileAccess.Read))
             {
                 testData = (UrlEncodingTestData)new DataContractJsonSerializer(typeof(UrlEncodingTestData)).ReadObject(s);
             }
