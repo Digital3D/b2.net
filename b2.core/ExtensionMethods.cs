@@ -71,7 +71,7 @@ namespace com.wibblr.b2
         /// <param name="message"></param>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public static HttpRequestMessage WithContent(this HttpRequestMessage message, B2Request obj)
+        public static HttpRequestMessage WithJsonSerializedContent(this HttpRequestMessage message, B2Request obj)
         {
             var stream = new MemoryStream();
             new DataContractJsonSerializer(obj.GetType()).WriteObject(stream, obj);

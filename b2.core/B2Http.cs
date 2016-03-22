@@ -167,7 +167,7 @@ namespace com.wibblr.b2
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_create_bucket")
                 .WithAuthorization(authorizationToken)
-                .WithContent(new CreateBucketRequest { accountId = accountId, bucketName = bucketName, bucketType = bucketType });
+                .WithJsonSerializedContent(new CreateBucketRequest { accountId = accountId, bucketName = bucketName, bucketType = bucketType });
 
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -192,7 +192,7 @@ namespace com.wibblr.b2
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_delete_bucket")
                 .WithAuthorization(authorizationToken)
-                .WithContent(new DeleteBucketRequest { accountId = accountId, bucketId = bucketId });
+                .WithJsonSerializedContent(new DeleteBucketRequest { accountId = accountId, bucketId = bucketId });
 
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -217,7 +217,7 @@ namespace com.wibblr.b2
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_delete_file_version")
                 .WithAuthorization(authorizationToken)
-                .WithContent(new DeleteFileVersionRequest { fileName = fileName, fileId = fileId });
+                .WithJsonSerializedContent(new DeleteFileVersionRequest { fileName = fileName, fileId = fileId });
 
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -243,7 +243,7 @@ namespace com.wibblr.b2
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_download_file_by_id")
                .WithAuthorization(authorizationToken)
-               .WithContent(new DownloadFileByIdRequest { fileId = fileId })
+               .WithJsonSerializedContent(new DownloadFileByIdRequest { fileId = fileId })
                .WithRange(rangeLower, rangeUpper);
 
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
@@ -296,7 +296,7 @@ namespace com.wibblr.b2
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_get_file_info")
                 .WithAuthorization(authorizationToken)
-                .WithContent(new GetFileInfoRequest { fileId = fileId });
+                .WithJsonSerializedContent(new GetFileInfoRequest { fileId = fileId });
 
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -322,7 +322,7 @@ namespace com.wibblr.b2
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_get_upload_url")
                 .WithAuthorization(authorizationToken)
-                .WithContent(new GetUploadUrlRequest { bucketId = bucketId });
+                .WithJsonSerializedContent(new GetUploadUrlRequest { bucketId = bucketId });
 
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -347,7 +347,7 @@ namespace com.wibblr.b2
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_hide_file")
                 .WithAuthorization(authorizationToken)
-                .WithContent(new HideFileRequest { bucketId = bucketId, fileName = fileName });
+                .WithJsonSerializedContent(new HideFileRequest { bucketId = bucketId, fileName = fileName });
 
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -371,7 +371,7 @@ namespace com.wibblr.b2
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_list_buckets")
                 .WithAuthorization(authorizationToken)
-                .WithContent(new ListBucketsRequest { accountId = accountId });
+                .WithJsonSerializedContent(new ListBucketsRequest { accountId = accountId });
 
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -395,7 +395,7 @@ namespace com.wibblr.b2
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_list_file_names")
                 .WithAuthorization(authorizationToken)
-                .WithContent(new ListFileNamesRequest { bucketId = bucketId, startFileName = startFileName, maxFileCount = maxFileCount });
+                .WithJsonSerializedContent(new ListFileNamesRequest { bucketId = bucketId, startFileName = startFileName, maxFileCount = maxFileCount });
 
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -422,7 +422,7 @@ namespace com.wibblr.b2
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_list_file_versions")
                 .WithAuthorization(authorizationToken)
-                .WithContent(new ListFileNamesRequest { bucketId = bucketId, startFileName = startFileName, maxFileCount = maxFileCount });
+                .WithJsonSerializedContent(new ListFileNamesRequest { bucketId = bucketId, startFileName = startFileName, maxFileCount = maxFileCount });
 
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -455,7 +455,7 @@ namespace com.wibblr.b2
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_update_bucket")
                 .WithAuthorization(authorizationToken)
-                .WithContent(new UpdateBucketRequest { accountId = accountId, bucketId = bucketId, bucketType = bucketType });
+                .WithJsonSerializedContent(new UpdateBucketRequest { accountId = accountId, bucketId = bucketId, bucketType = bucketType });
 
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
