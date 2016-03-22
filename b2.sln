@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "b2", "b2\b2.csproj", "{F22DA53A-D144-4C6D-84B4-C65BB7F9E57F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "b2.core", "b2.core\b2.core.csproj", "{F22DA53A-D144-4C6D-84B4-C65BB7F9E57F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "b2.test", "b2.test\b2.test.csproj", "{B2F7A3D2-F265-4600-85D4-3336A9FC07AD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "b2.core.test", "b2.core.test\b2.core.test.csproj", "{B2F7A3D2-F265-4600-85D4-3336A9FC07AD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
