@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Numerics;
-using System.Text;
-using System.Linq;
 
 namespace com.wibblr.utils
 {
@@ -23,13 +20,8 @@ namespace com.wibblr.utils
                 throw new ArgumentOutOfRangeException("numBytes must be between 1 and 16");
 
             var buffer = new byte[numBytes];
-            var sb = new StringBuilder(numBytes * 2);
-
             r.NextBytes(buffer);
-            foreach (var b in buffer)
-                sb.AppendFormat("{0:X2}", b);
-
-            return sb.ToString();
+            return buffer.ToHex();
         }
     }
 }
