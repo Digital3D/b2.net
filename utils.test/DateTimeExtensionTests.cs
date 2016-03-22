@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using com.wibblr.utils;
 using NUnit.Framework;
 
 namespace com.wibblr.b2
 {
     [TestFixture]
-    public class ExtensionMethodsTests
+    public class DateTimeExtensionTests
     {
         [Test]
         public void DateTime_ToUnixTimeMillis()

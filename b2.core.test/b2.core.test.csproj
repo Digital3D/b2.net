@@ -61,7 +61,6 @@
     <Compile Include="FilesystemScannerTests.cs" />
     <Compile Include="StreamProgressCalculatorTests.cs" />
     <Compile Include="AccumulatingCircularBufferTests.cs" />
-    <Compile Include="ExtensionMethodsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UrlEncodingTests.cs" />
   </ItemGroup>
