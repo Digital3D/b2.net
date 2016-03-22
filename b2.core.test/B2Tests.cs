@@ -1,7 +1,9 @@
-﻿using NUnit.Framework;
+﻿using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+
+using NUnit.Framework;
 
 namespace com.wibblr.b2
 {
@@ -15,15 +17,11 @@ namespace com.wibblr.b2
         /// Read the b2 credentials from the same directory as the test assembly.
         /// Obviously this will not work in a CI server without some more work.
         /// </summary>
-        [SetUp]
-        public void Setup()
-        {
-            credentials = Credentials.Read(new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName);
-        }
-
         [Test]
         public async Task B2UploadFile()
         {
+            var path = Path.Combine(new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName, "credentials.json");
+            credentials = Credentials.Read(path);
             var b2 = new B2();
             await b2.Login(credentials.accountId, credentials.applicationKey, bucketName).ConfigureAwait(false);
             var sourcePath = Path.Combine(new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName, "url-encoding.json");

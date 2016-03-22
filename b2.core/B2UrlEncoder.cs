@@ -56,9 +56,9 @@ namespace com.wibblr.b2
         public static string Decode(string s)
         {
             var len = s.Length;
-            
+
             // Allocate enough space to hold the decoded bytes
-            // This must be equal or less to the space used by the encoded string, so 
+            // This will always be equal or less than the length the encoded string, so 
             // use that.
             var bytes = new byte[len];
             var pos = 0;
