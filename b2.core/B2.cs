@@ -65,7 +65,7 @@ namespace com.wibblr.b2
                 var sha1hex = new StringBuilder(40);
 
                 foreach (var b in shaTask.Result)
-                    sha1hex.Append(b.ToString("X2"));
+                    sha1hex.AppendFormat("{0:X2}", b);
 
                 qs.Position = 0;
 
