@@ -54,6 +54,7 @@
     <Compile Include="DateTimeExtensionTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RandomStringTests.cs" />
+    <Compile Include="StringExtensionTests.cs" />
     <Compile Include="TempDirectoryTests.cs" />
   </ItemGroup>
   <ItemGroup>

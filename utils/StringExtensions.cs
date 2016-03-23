@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace com.wibblr.utils
@@ -15,6 +16,13 @@ namespace com.wibblr.utils
         /// <param name="s">String to convert</param>
         /// <returns>Base-64 representation of the string</returns>
         public static string ToBase64(this string s) => Convert.ToBase64String(Encoding.UTF8.GetBytes(s));
+
+        /// <summary>
+        /// Compute the SHA1 hash of a string. String is decoded to bytes using UTF-8.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        public static string Sha1(this string s) => SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(s)).ToHex();
 
         /// <summary>
         /// 
