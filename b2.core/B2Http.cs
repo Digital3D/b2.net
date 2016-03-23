@@ -239,11 +239,11 @@ namespace com.wibblr.b2
         /// <param name="rangeUpper"></param>
         /// <param name="fileId"></param>
         /// <returns></returns>
-        public async Task<B2File> DownloadFileById(string apiUrl, string authorizationToken, string fileId, long? rangeLower = null, long? rangeUpper = null)
+        public async Task<B2File> DownloadFileById(string downloadUrl, string authorizationToken, string fileId, long? rangeLower = null, long? rangeUpper = null)
         {
-            Trace(() => $"DownloadFileById: apiUrl={apiUrl}, authorizationToken={authorizationToken}, fileId={fileId}, rangeLower={rangeLower}, rangeUpper={rangeUpper}");
+            Trace(() => $"DownloadFileById: downloadUrl={downloadUrl}, authorizationToken={authorizationToken}, fileId={fileId}, rangeLower={rangeLower}, rangeUpper={rangeUpper}");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_download_file_by_id")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{downloadUrl}/b2api/v1/b2_download_file_by_id")
                .WithAuthorization(authorizationToken)
                .WithJsonSerializedContent(new DownloadFileByIdRequest { fileId = fileId })
                .WithRange(rangeLower, rangeUpper);
@@ -271,7 +271,7 @@ namespace com.wibblr.b2
         {
             Trace(() => $"DownloadFileByName: downloadUrl={downloadUrl}, authorizationToken={authorizationToken}, bucketName={bucketName}, fileName={fileName}, rangeLower={rangeLower}, rangeUpper={rangeUpper}");
 
-            var request = new HttpRequestMessage(HttpMethod.Get, $"{downloadUrl}/file/${bucketName}/${fileName}")
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{downloadUrl}/file/{bucketName}/{fileName}")
                 .WithAuthorization(authorizationToken)
                 .WithRange(rangeLower, rangeUpper);
 

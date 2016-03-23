@@ -49,7 +49,8 @@ namespace com.wibblr.b2
         public async Task UploadFile(string sourcePath, string destinationPath, string contentType = "text/plain", IProgress<StreamProgress> checksumProgress = null, IProgress<StreamProgress> uploadProgress = null)
         {
             // Ensure the file cannot be altered whilst being uploaded.
-            using (var qs = new ProgressReportingStream(new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+            using (var fs = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var qs = new ProgressReportingStream(fs))
             {
                 // The B2 HTTP api requires the SHA1 checksum before uploading; this means the file must be
                 // read twice, doh!

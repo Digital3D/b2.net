@@ -12,6 +12,9 @@ using Common.Logging.Configuration;
 using Common.Logging.Simple;
 
 using NUnit.Framework;
+
+using com.wibblr.utils;
+
 namespace com.wibblr.b2
 {
     /// <summary>
@@ -26,8 +29,91 @@ namespace com.wibblr.b2
     [TestFixture]
     public class B2HttpTests
     {
-        private string bucketName = "B2HttpTests";
-        private Credentials credentials;
+        /// <summary>
+        /// Class that creates a new bucket for testing, and deletes it when finished.
+        /// </summary>
+        class TestBucket : IDisposable
+        {
+            public B2Http api = new B2Http();
+            public AuthorizeAccountResponse authorizeAccountResponse { get; private set; }
+            public CreateBucketResponse createBucketResponse { get; private set; }
+
+            public TestBucket()
+            {
+                authorizeAccountResponse = api.AuthorizeAccount(credentials.accountId, credentials.applicationKey).Result;
+                createBucketResponse = api.CreateBucket(authorizeAccountResponse.apiUrl, authorizeAccountResponse.authorizationToken, authorizeAccountResponse.accountId, RandomString.Next(16), "allPrivate").Result;
+            }
+
+            public string ApiUrl { get { return authorizeAccountResponse.apiUrl; } }
+            public string AuthToken { get { return authorizeAccountResponse.authorizationToken; } }
+            public string AccountId { get { return authorizeAccountResponse.accountId; } }
+            public string DownloadUrl { get { return authorizeAccountResponse.downloadUrl; } }
+            public string BucketId { get { return createBucketResponse.bucketId; } }
+
+            /// <summary>
+            /// Delete the bucket. Swallow any exceptions, failure to delete the bucket is not itself a test failure,
+            /// and might hide an actual problem.
+            /// </summary>
+            public void Dispose()
+            {
+                try { api.DeleteBucket(ApiUrl, AuthToken, AccountId, BucketId).Wait(); } catch (Exception) { }
+            }
+
+            public async Task<DeleteFileVersionResponse> DeleteFileVersion(string fileName, string fileId)
+                => await api.DeleteFileVersion(ApiUrl, AuthToken, fileName, fileId);
+
+            public async Task<B2File> DownloadFileByName(string fileName)
+                => await api.DownloadFileByName(DownloadUrl, AuthToken, createBucketResponse.bucketName, fileName);
+
+            public async Task<ListBucketsResponse> ListBuckets()
+                => await api.ListBuckets(ApiUrl, AuthToken, AccountId);
+
+            public async Task<ListFileVersionsResponse> ListFileVersions(string startFileName = null, string startFileId = null)
+                => await api.ListFileVersions(ApiUrl, AuthToken, BucketId, startFileName, startFileId, 2);
+
+            public async Task<B2File> DownloadFileById(string fileId)
+                => await api.DownloadFileById(DownloadUrl, AuthToken, fileId);
+
+            public async Task<GetUploadUrlResponse> GetUploadUrl()
+                => await api.GetUploadUrl(ApiUrl, AuthToken, BucketId);
+
+            public async Task<UploadFileResponse> UploadFile(string fileName = null, string content = null, string sha1 = null)
+            {
+                var u = await GetUploadUrl();
+
+                if (fileName == null)
+                    fileName = RandomString.Next(10);
+
+                if (content == null)
+                    content = RandomString.Next(10);
+
+                if (sha1 == null)
+                    sha1 = content.Sha1();
+
+                var contentBytes = Encoding.UTF8.GetBytes(content);
+
+                return await api.UploadFile(
+                    u.uploadUrl,
+                    u.authorizationToken,
+                    fileName,
+                    "application/octet-stream",
+                    contentBytes.Length,
+                    sha1,
+                    new Dictionary<string, string> { { "asdf", "qwer" } },
+                    new MemoryStream(contentBytes));
+            }
+        }
+
+        static Credentials credentials = Credentials.Read();
+
+        static async Task<AuthorizeAccountResponse> AuthorizeAccount(B2Http b2http)
+            => await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
+
+        //static async Task<DeleteBucketResponse> DeleteBucket(B2Http b2http, AuthorizeAccountResponse a, string bucketId)
+        //    => await b2http.DeleteBucket(a.apiUrl, a.authorizationToken, credentials.accountId, bucketId);
+
+        //static async Task<CreateBucketResponse> CreateBucket(B2Http b2http, AuthorizeAccountResponse a, string bucketName)
+        //    => await b2http.CreateBucket(a.apiUrl, a.authorizationToken, a.accountId, bucketName, "allPrivate");
 
         /// <summary>
         /// Read the b2 credentials from the same directory as the test assembly.
@@ -43,210 +129,133 @@ namespace com.wibblr.b2
             properties["showLogName"] = "true";
             properties["dateTimeFormat"] = "yyyy-MM-dd HH:mm:ss.fff";
             LogManager.Adapter = new ConsoleOutLoggerFactoryAdapter(properties);
-
-            credentials = Credentials.Read(Path.Combine(new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName, "credentials.json"));
         }
-
-        /// <summary>
-        /// Very simple test that calls all the HTTP methods at least once
-        /// </summary>
-        /// <returns></returns>
-        [Test]
-        public async Task AllMethods()
-        {
-            var b2http = new B2Http();
-
-            // Authorize
-            var ar = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
-            Assert.IsTrue(ar.apiUrl.EndsWith("backblaze.com"));
-            Assert.Greater(ar.authorizationToken.Length, 0);
-
-            // List buckets; delete all the files in the test bucket, and then the bucket itself, if it exists
-            var lbr = await b2http.ListBuckets(ar.apiUrl, ar.authorizationToken, ar.accountId);
-            var bucket = lbr.buckets.FirstOrDefault(b => b.bucketName == bucketName);
-            if (bucket != null)
-            {
-                var lfvr = await b2http.ListFileVersions(ar.apiUrl, ar.authorizationToken, bucket.bucketId);
-                foreach (var f in lfvr.files)
-                    await b2http.DeleteFileVersion(ar.apiUrl, ar.authorizationToken, f.fileName, f.fileId);
-
-                await b2http.DeleteBucket(ar.apiUrl, ar.authorizationToken, ar.accountId, bucket.bucketId);
-            }
-
-            // Create bucket
-            var cbr = await b2http.CreateBucket(ar.apiUrl, ar.authorizationToken, ar.accountId, bucketName, "allPrivate");
-
-            // List buckets (again)
-            var lbr2 = await b2http.ListBuckets(ar.apiUrl, ar.authorizationToken, ar.accountId);
-            var bucketId = lbr2.buckets.First(b => b.bucketName == bucketName).bucketId;
-
-            // Get upload Url
-            var guur = await b2http.GetUploadUrl(ar.apiUrl, ar.authorizationToken, bucketId);
-
-            // Upload file
-            await b2http.UploadFile(
-                guur.uploadUrl,
-                guur.authorizationToken,
-                "hello.txt",
-                "text/plain",
-                12,
-                "430ce34d020724ed75a196dfc2ad67c77772d169",
-                new Dictionary<string, string> { { "asdf", "qwer" } },
-                new MemoryStream(Encoding.UTF8.GetBytes("hello world!")));
-
-            // Upload another version of file
-            await b2http.UploadFile(
-                guur.uploadUrl,
-                guur.authorizationToken,
-                "hello.txt",
-                "text/plain",
-                19,
-                "81b716c0e4e892836ff2ba9f98c7f00aac0c7656",
-                new Dictionary<string, string> { { "zxcv", "uiop" } },
-                new MemoryStream(Encoding.UTF8.GetBytes("hello again, world!")));
-
-            // List file names
-            var lfnr = await b2http.ListFileNames(ar.apiUrl, ar.authorizationToken, bucketId);
-            Assert.AreEqual(1, lfnr.files.Count);
-            Assert.AreEqual("upload", lfnr.files.First().action);
-            Assert.AreEqual(19, lfnr.files.First().size);
-
-            // List file versions. Sort order is (name, uploadtime DESC)
-            var lfv2 = await b2http.ListFileVersions(ar.apiUrl, ar.authorizationToken, bucketId);
-            Assert.AreEqual(2, lfv2.files.Count);
-            Assert.AreEqual(19, lfv2.files.First().size);
-            Assert.AreEqual(12, lfv2.files.Last().size);
-
-            // GetFileInfo
-            var gfi = await b2http.GetFileInfo(ar.apiUrl, ar.authorizationToken, lfv2.files.First().fileId);
-            Assert.AreEqual(19, gfi.contentLength);
-
-            // Download file by ID
-
-            // Download file by name
-
-            // Hide File
-
-            // UpdateBucket
-
-            // Delete bucket
-            await b2http.DeleteBucket(ar.apiUrl, ar.authorizationToken, ar.accountId, bucket.bucketId);
-
-        }
-
-        //----------------------------------------------------------------------------------------
-        // Following tests can only be used only during development and debugging, as they will 
-        // only work if the server is set up correctly (e.g. CreateBucket will fail if the 
-        // bucket must not already exists)
-        //----------------------------------------------------------------------------------------
 
         /// <summary>
         /// Test the Authorize API method
         /// </summary>
         /// <returns></returns>
         [Test]
-        [Explicit]
-        public async Task Authorize()
+        public async Task AuthorizeAccount()
         {
-            var b2http = new B2Http();
-            var ar = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
+            var a = await AuthorizeAccount(new B2Http());
+            Assert.IsTrue(a.apiUrl.EndsWith("backblaze.com"));
+            Assert.Greater(a.authorizationToken.Length, 0);
         }
 
         /// <summary>
-        /// Create bucket. The bucket must not already exist (run the DeleteBucket test if 
-        /// necessary)
+        /// Create bucket.
         /// </summary>
         /// <returns></returns>
         [Test]
-        [Explicit]
-        public async Task CreateBucket()
+        public void CreateBucket()
         {
-            var b2http = new B2Http();
-            var ar = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
-            var createBucketResponse = await b2http.CreateBucket(ar.apiUrl, ar.authorizationToken, ar.accountId, bucketName, "allPrivate");
+            using (var b = new TestBucket())
+                Assert.IsNotNull(b.BucketId);
         }
 
         /// <summary>
-        /// Delete bucket. The bucket must already exist and be empty
+        /// Delete bucket.
         /// </summary>
         /// <returns></returns>
         [Test]
-        [Explicit]
         public async Task DeleteBucket()
         {
             var b2http = new B2Http();
-            var authorizationResponse = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
-            var listBucketsResponse = await b2http.ListBuckets(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId);
-            var bucketId = listBucketsResponse.buckets.First(b => b.bucketName == bucketName).bucketId;
-            var deleteBucketResponse = await b2http.DeleteBucket(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId, bucketId);
+            var bucketName = RandomString.Next(16);
+            var a = await AuthorizeAccount(b2http);
+            var c = await b2http.CreateBucket(a.apiUrl, a.authorizationToken, a.accountId, bucketName, "allPrivate");
+            Assert.IsNotNull(c.bucketId);
+            await b2http.DeleteBucket(a.apiUrl, a.authorizationToken, a.accountId, c.bucketId);
         }
 
         /// <summary>
         /// Delete one particular version of a file
         /// </summary>
         /// <returns></returns>
+        [Test]
         public async Task DeleteFileVersion()
         {
-            var b2http = new B2Http();
-            var authorizationResponse = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
-            var listBucketsResponse = await b2http.ListBuckets(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId);
-            var bucketId = listBucketsResponse.buckets.First(b => b.bucketName == bucketName).bucketId;
-            var listFileVersionsResponse = await b2http.ListFileVersions(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, bucketId);
-        }
+            using (var b = new TestBucket())
+            {
+                var uploadTasks = new[] { b.UploadFile(), b.UploadFile(), b.UploadFile(), b.UploadFile() };
+                await Task.WhenAll(uploadTasks);
 
-        public async Task DeleteFileById()
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task DeleteFileByName()
-        {
-            throw new NotImplementedException();
+                var deleteTasks = uploadTasks.Select(u => b.DeleteFileVersion(u.Result.fileName, u.Result.fileId)).ToArray();
+                await Task.WhenAll(deleteTasks);
+            }
         }
 
         /// <summary>
-        /// Download a file - will only work after calling the test methods CreateBucket() and UploadFile()
+        /// Download a file by using the file ID
         /// </summary>
         [Test]
-        [Explicit]
         public async Task DownloadFileById()
         {
-            var b2http = new B2Http();
-
-            var authorizationResponse = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
-            var listBucketsResponse = await b2http.ListBuckets(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId);
-            var bucketId = listBucketsResponse.buckets.First(b => b.bucketName == bucketName).bucketId;
-            var fileNames = await b2http.ListFileNames(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, bucketId);
-            var fileId = fileNames.files.First(f => f.fileName == "hello.txt").fileId;
-
-            var file = await b2http.DownloadFileById(authorizationResponse.downloadUrl, authorizationResponse.authorizationToken, fileId, null, null);
-
-            Assert.AreEqual(12, file.length);
-
-            using (var r = new StreamReader(file.content))
+            using (var b = new TestBucket())
             {
-                var text = r.ReadToEnd();
-                Assert.AreEqual("hello world!", text);
-            }
+                var uploadTasks = new[] { b.UploadFile("file0", "content0"), b.UploadFile("file1", "content1"), b.UploadFile("file2", "content2") };
+                await Task.WhenAll(uploadTasks);
 
-            Assert.AreEqual("qwer", file.attributes["asdf"]);
+                var downloadTasks = uploadTasks.Select(u => b.DownloadFileById(u.Result.fileId)).ToArray();
+                await Task.WhenAll(downloadTasks);
+
+                for (int i = 0; i < downloadTasks.Length; i++)
+                    Assert.AreEqual($"content{i}", new StreamReader(downloadTasks[i].Result.content).ReadToEnd());
+
+                var deleteTasks = uploadTasks.Select(u => b.DeleteFileVersion(u.Result.fileName, u.Result.fileId)).ToArray();
+                await Task.WhenAll(deleteTasks);
+            }
         }
 
+        /// <summary>
+        /// Download a file by using the bucket name and file name
+        /// </summary>
+        /// <returns></returns>
+        [Test]
         public async Task DownloadFileByName()
         {
-            throw new NotImplementedException();
+            using (var b = new TestBucket())
+            {
+                var uploadTasks = new[] { b.UploadFile("file0", "content0"), b.UploadFile("file1", "content1"), b.UploadFile("file2", "content2") };
+                await Task.WhenAll(uploadTasks);
+
+                var downloadTasks = uploadTasks.Select(u => b.DownloadFileByName(u.Result.fileName)).ToArray();
+                await Task.WhenAll(downloadTasks);
+
+                for (int i = 0; i < downloadTasks.Length; i++)
+                    Assert.AreEqual($"content{i}", new StreamReader(downloadTasks[i].Result.content).ReadToEnd());
+
+                var deleteTasks = uploadTasks.Select(u => b.DeleteFileVersion(u.Result.fileName, u.Result.fileId)).ToArray();
+                await Task.WhenAll(deleteTasks);
+            }
         }
 
+        /// <summary>
+        /// Call the GetFileInfo api
+        /// </summary>
+        /// <returns></returns>
+        [Test]
         public async Task GetFileInfo()
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Call the GetFileInfo api
+        /// </summary>
+        /// <returns></returns>
+        [Test]
         public async Task GetUploadUrl()
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Call the GetFileInfo api
+        /// </summary>
+        /// <returns></returns>
+        [Test]
         public async Task HideFile()
         {
             throw new NotImplementedException();
@@ -256,63 +265,72 @@ namespace com.wibblr.b2
         /// List buckets
         /// </summary>
         [Test]
-        [Explicit]
         public async Task ListBuckets()
         {
-            var b2http = new B2Http();
-            var authorizationResponse = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
-            var listBucketsResponse = await b2http.ListBuckets(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId);
+            using (var b = new TestBucket())
+            {
+                var r = await b.ListBuckets();
+                Assert.Contains(b.BucketId, r.buckets.Select(x => x.bucketId).ToArray());
+            }
         }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        [Test]
         public async Task ListFileNames()
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         [Test]
         public async Task ListFileVersions()
         {
-            var b2http = new B2Http();
-
-            var authorizationResponse = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
-            var listBucketsResponse = await b2http.ListBuckets(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId);
-            var bucketId = listBucketsResponse.buckets.First(b => b.bucketName == bucketName).bucketId;
-            var listFileVersionsResponse = await b2http.ListFileVersions(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, bucketId);
-            foreach (var f in listFileVersionsResponse.files)
+            using (var b = new TestBucket())
             {
-                Console.WriteLine($"{f.fileName} {f.fileId}");
-            }
+                var uploadTasksA = new[] { b.UploadFile("file2", "contentA2"), b.UploadFile("file1", "contentA1"), b.UploadFile("file0", "contentA0") };
+                await Task.WhenAll(uploadTasksA);
 
+                var uploadTasksB = new[] { b.UploadFile("file0", "contentB0"), b.UploadFile("file1", "contentB1"), b.UploadFile("file2", "contentB2") };
+                await Task.WhenAll(uploadTasksA);
+
+                // ListFileVersions returns files in batches. The batch size is set to 2 in TestBucket.
+                // Do not specify a start file name or id. Should be returned in alphabetical name order and then reverse upload time order
+                var r = await b.ListFileVersions(null, null);
+                Assert.AreEqual(2, r.files.Count);
+                Assert.AreEqual("file0", r.files[0].fileName);
+                Assert.AreEqual("file0", r.files[1].fileName);
+
+                r = await b.ListFileVersions(r.nextFileName, r.nextFileId);
+                Assert.AreEqual("file1", r.files[0].fileName);
+                Assert.AreEqual("file1", r.files[1].fileName);
+
+                r = await b.ListFileVersions(r.nextFileName, r.nextFileId);
+                Assert.AreEqual("file2", r.files[0].fileName);
+                Assert.AreEqual("file2", r.files[1].fileName);
+            }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        [Test]
         public async Task UpdateBucket()
         {
             throw new NotImplementedException();
         }
 
         /// <summary>
-        /// Upload a file - will only work if the bucket already exists
+        /// Upload a file
         /// </summary>
         [Test]
-        [Explicit]
         public async Task UploadFile()
         {
-            var b2http = new B2Http();
-            var authorizationResponse = await b2http.AuthorizeAccount(credentials.accountId, credentials.applicationKey);
-            var listBucketsResponse = await b2http.ListBuckets(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, credentials.accountId);
-            var bucketId = listBucketsResponse.buckets.First(b => b.bucketName == bucketName).bucketId;
-            var getUploadUrlResponse = await b2http.GetUploadUrl(authorizationResponse.apiUrl, authorizationResponse.authorizationToken, bucketId);
-
-            var uploadFileResponse = await b2http.UploadFile(
-                getUploadUrlResponse.uploadUrl,
-                getUploadUrlResponse.authorizationToken,
-                "hello.txt",
-                "text/plain",
-                12,
-                "430ce34d020724ed75a196dfc2ad67c77772d169",
-                new Dictionary<string, string> { { "asdf", "qwer" } },
-                new MemoryStream(Encoding.UTF8.GetBytes("hello world!")));
+            using (var t = new TestBucket())
+                await t.UploadFile("hello.txt", "hello world!", "430ce34d020724ed75a196dfc2ad67c77772d169");
         }
     }
 }
