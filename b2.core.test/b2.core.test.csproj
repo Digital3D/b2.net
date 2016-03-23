@@ -65,9 +65,6 @@
     <Compile Include="UrlEncodingTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="credentials.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="url-encoding.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

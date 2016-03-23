@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 
 using NUnit.Framework;
 
+using com.wibblr.utils;
+
 namespace com.wibblr.b2
 {
     [TestFixture]
@@ -14,19 +16,22 @@ namespace com.wibblr.b2
         private Credentials credentials;
 
         /// <summary>
-        /// Read the b2 credentials from the same directory as the test assembly.
-        /// Obviously this will not work in a CI server without some more work.
+        /// Upload a file
         /// </summary>
         [Test]
         public async Task B2UploadFile()
         {
-            var path = Path.Combine(new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName, "credentials.json");
-            credentials = Credentials.Read(path);
+            credentials = Credentials.Read();
             var b2 = new B2();
             await b2.Login(credentials.accountId, credentials.applicationKey, bucketName).ConfigureAwait(false);
-            var sourcePath = Path.Combine(new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName, "url-encoding.json");
-            var destinationPath = "a/b/c/test.json";
-            await b2.UploadFile(sourcePath, destinationPath).ConfigureAwait(false);
+            using (var t = new TempDirectory())
+            {
+                t.CreateFile("test.txt");
+                var sourcePath = Path.Combine(t.FullPath, "test.txt");
+                var destinationPath = "a/b/c/test.txt";
+
+                await b2.UploadFile(sourcePath, destinationPath);
+            }
         }
     }
 }

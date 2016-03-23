@@ -12,16 +12,18 @@ namespace com.wibblr.b2
 
         public static string DefaultCredentialsPath() => Path.Combine(Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%"), ".b2.net", "credentials.json");
 
-        /// <summary>
-        /// Read the credentials for the b2 service from the disk file 'credentials.json'.
-        /// This should look like this:
-        /// <code>
-        /// {"accountId":"3248833834","applicationKey":"29319230812931920381092381023289"}
-        /// </code>
-        /// </summary>
-        /// <param name="path">File from which to read credentials. Defaults to ~\.b2.net\credentials.json</param>
-        /// <returns>Credentials object</returns>
-        public static Credentials Read(string path = null)
+        private static Credentials ReadFromEnvironment()
+        {
+            var accountId = Environment.GetEnvironmentVariable("B2_ACCOUNT_ID");
+            var applicationKey = Environment.GetEnvironmentVariable("B2_APPLICATION_KEY");
+
+            if (accountId == null || applicationKey == null)
+                throw new Exception("Environment variables B2_ACCOUNT_ID and B2_APPLICATION_KEY not set");
+
+            return new Credentials { accountId = accountId, applicationKey = applicationKey };
+        }
+
+        private static Credentials ReadFromFile(string path = null)
         {
             var f = path ?? DefaultCredentialsPath();
             try
@@ -39,6 +41,24 @@ namespace com.wibblr.b2
             {
                 throw new Exception($"Error deserializing credentials file {f}", e);
             }
+        }
+
+        /// <summary>
+        /// Read credentials from environment variables. If they are not set, read from file instead.
+        /// This should look like this:
+        /// <code>
+        /// {"accountId":"3248833834","applicationKey":"29319230812931920381092381023289"}
+        /// </code>
+        /// </summary>
+        /// <param name="path">File from which to read credentials. Defaults to ~\.b2.net\credentials.json</param>
+        /// <returns>Credentials object</returns>
+        /// </summary>
+        /// <returns></returns>
+        public static Credentials Read(string path = null)
+        {
+            try { return ReadFromEnvironment(); } catch (Exception) { }
+
+            return ReadFromFile(path);
         }
 
         /// <summary>
