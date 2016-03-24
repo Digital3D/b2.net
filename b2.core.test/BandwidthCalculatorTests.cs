@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System;
+using NUnit.Framework;
 
 namespace com.wibblr.b2
 {
@@ -114,6 +115,46 @@ namespace com.wibblr.b2
             c.Accumulate(108, 200);
             c.Accumulate(112, 300);
             Assert.AreEqual(0f, c.BytesPerWindow()); // 0 bytes in 3 windows (109-111)
+        }
+
+        [Test]
+        public void ShouldThrowOnInvalidCapacity()
+        {
+            Assert.That(() => new BandwidthCalculator(0),
+               Throws.Exception
+                   .TypeOf<ArgumentOutOfRangeException>()
+                   .With.Property("ParamName").EqualTo("capacity"));
+        }
+
+        [Test]
+        public void OldDataShouldGoInCurrentWindow()
+        {
+            var c = new BandwidthCalculator(3);
+
+            c.Accumulate(107, 100);
+            c.Accumulate(108, 200);
+            c.Accumulate(109, 300);
+
+            Assert.AreEqual(300 / 2f, c.BytesPerWindow()); // 600 bytes in 2 windows (107-108)
+
+            c.Accumulate(105, 400); // should be included in the 109 window
+
+            Assert.AreEqual(300 / 2f, c.BytesPerWindow()); // still 600 bytes in 2 windows (107-108)
+
+            c.Accumulate(110, 500);
+
+            Assert.AreEqual(1000 / 3f, c.BytesPerWindow()); // 1000 bytes in 3 windows (107-109)
+        }
+
+        [Test]
+        public void ShouldThrowOnInvalidWindow()
+        {
+            var c = new BandwidthCalculator(3);
+
+            Assert.That(() => c.Accumulate(-1, 100),
+              Throws.Exception
+                  .TypeOf<ArgumentOutOfRangeException>()
+                  .With.Property("ParamName").EqualTo("window"));
         }
     }
 }
