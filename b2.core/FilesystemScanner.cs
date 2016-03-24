@@ -18,7 +18,7 @@ namespace com.wibblr.b2
             Info = info;
             RelativePath = (parent == null) 
                 ? info.Name
-                : parent.RelativePath + Path.DirectorySeparatorChar + info.Name;            
+                : Path.Combine(parent.RelativePath, info.Name);            
         }
     }
 

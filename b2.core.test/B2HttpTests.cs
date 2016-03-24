@@ -81,6 +81,12 @@ namespace com.wibblr.b2
             public async Task<ListFileVersionsResponse> ListFileVersions(string startFileName = null, string startFileId = null)
                 => await api.ListFileVersions(ApiUrl, AuthToken, BucketId, startFileName, startFileId, 2);
 
+            public async Task<ListFileNamesResponse> ListFileNames(string startFileName = null)
+                => await api.ListFileNames(ApiUrl, AuthToken, BucketId, startFileName, 2);
+
+            public async Task<UpdateBucketResponse> UpdateBucket(string bucketType)
+                => await api.UpdateBucket(ApiUrl, AuthToken, AccountId, BucketId, bucketType);
+
             public async Task<UploadFileResponse> UploadFile(string fileName = null, string content = null, string sha1 = null)
             {
                 var u = await GetUploadUrl();
@@ -315,7 +321,9 @@ namespace com.wibblr.b2
 
                 v = await b.ListFileVersions();
 
-                Assert.AreEqual(1, v.files.Count);
+                Assert.AreEqual(2, v.files.Count);
+                Assert.AreEqual("hide", v.files[0].action);
+                Assert.AreEqual("upload", v.files[1].action);
             }
         }
 
@@ -338,7 +346,19 @@ namespace com.wibblr.b2
         [Test]
         public async Task ListFileNames()
         {
-            throw new NotImplementedException();
+            using (var b = new TestBucket())
+            {
+                var uploadTasksA = new[] { b.UploadFile("file2", "contentA2"), b.UploadFile("file1", "contentA1"), b.UploadFile("file0", "contentA0") };
+                await Task.WhenAll(uploadTasksA);
+
+                var uploadTasksB = new[] { b.UploadFile("file0", "contentB0"), b.UploadFile("file1", "contentB1"), b.UploadFile("file2", "contentB2") };
+                await Task.WhenAll(uploadTasksA);
+
+                var r = await b.ListFileNames();
+                Assert.AreEqual(2, r.files.Count);
+                r = await b.ListFileNames(r.nextFileName);
+                Assert.AreEqual(1, r.files.Count);
+            }
         }
 
         /// <summary>
@@ -378,7 +398,13 @@ namespace com.wibblr.b2
         [Test]
         public async Task UpdateBucket()
         {
-            throw new NotImplementedException();
+            using (var t = new TestBucket())
+            {
+                Assert.AreEqual("allPrivate", t.createBucketResponse.bucketType);
+                var u = await t.UpdateBucket("allPublic");
+                var b = await t.ListBuckets();
+                Assert.AreEqual("allPublic", b.buckets.First(x => x.bucketId == t.BucketId).bucketType);
+            }
         }
 
         /// <summary>
