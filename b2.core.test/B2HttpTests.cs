@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
 
 using Common.Logging;
 using Common.Logging.Configuration;
@@ -62,20 +60,26 @@ namespace com.wibblr.b2
             public async Task<DeleteFileVersionResponse> DeleteFileVersion(string fileName, string fileId)
                 => await api.DeleteFileVersion(ApiUrl, AuthToken, fileName, fileId);
 
-            public async Task<B2File> DownloadFileByName(string fileName)
-                => await api.DownloadFileByName(DownloadUrl, AuthToken, createBucketResponse.bucketName, fileName);
+            public async Task<B2File> DownloadFileById(string fileId, long? rangeLower = null, long? rangeUpper = null)
+               => await api.DownloadFileById(DownloadUrl, AuthToken, fileId, rangeLower, rangeUpper);
+
+            public async Task<B2File> DownloadFileByName(string fileName, long? rangeLower = null, long? rangeUpper = null)
+                => await api.DownloadFileByName(DownloadUrl, AuthToken, createBucketResponse.bucketName, fileName, rangeLower, rangeUpper);
+
+            public async Task<GetFileInfoResponse> GetFileInfo(string fileId)
+                => await api.GetFileInfo(ApiUrl, AuthToken, fileId);
+
+            public async Task<GetUploadUrlResponse> GetUploadUrl()
+                => await api.GetUploadUrl(ApiUrl, AuthToken, BucketId);
+
+            public async Task<HideFileResponse> HideFile(string fileName)
+                => await api.HideFile(ApiUrl, AuthToken, BucketId, fileName);
 
             public async Task<ListBucketsResponse> ListBuckets()
                 => await api.ListBuckets(ApiUrl, AuthToken, AccountId);
 
             public async Task<ListFileVersionsResponse> ListFileVersions(string startFileName = null, string startFileId = null)
                 => await api.ListFileVersions(ApiUrl, AuthToken, BucketId, startFileName, startFileId, 2);
-
-            public async Task<B2File> DownloadFileById(string fileId)
-                => await api.DownloadFileById(DownloadUrl, AuthToken, fileId);
-
-            public async Task<GetUploadUrlResponse> GetUploadUrl()
-                => await api.GetUploadUrl(ApiUrl, AuthToken, BucketId);
 
             public async Task<UploadFileResponse> UploadFile(string fileName = null, string content = null, string sha1 = null)
             {
@@ -209,6 +213,21 @@ namespace com.wibblr.b2
         }
 
         /// <summary>
+        /// Download part of a file by using the file ID
+        /// </summary>
+        [Test]
+        public async Task DownloadFileRangeById()
+        {
+            using (var b = new TestBucket())
+            {
+                var u = await b.UploadFile("file0", "content0");
+                var d = await b.DownloadFileById(u.fileId, 0, 3);
+                Assert.AreEqual($"cont", new StreamReader(d.content).ReadToEnd());
+                await b.DeleteFileVersion(u.fileName, u.fileId);
+            }
+        }
+
+        /// <summary>
         /// Download a file by using the bucket name and file name
         /// </summary>
         /// <returns></returns>
@@ -232,13 +251,33 @@ namespace com.wibblr.b2
         }
 
         /// <summary>
+        /// Download part of a file by using the bucket name and file name
+        /// </summary>
+        [Test]
+        public async Task DownloadFileRangeByName()
+        {
+            using (var b = new TestBucket())
+            {
+                var u = await b.UploadFile("file0", "content0");
+                var d = await b.DownloadFileByName(u.fileName, 3, null);
+                Assert.AreEqual($"tent0", new StreamReader(d.content).ReadToEnd());
+                await b.DeleteFileVersion(u.fileName, u.fileId);
+            }
+        }
+
+        /// <summary>
         /// Call the GetFileInfo api
         /// </summary>
         /// <returns></returns>
         [Test]
         public async Task GetFileInfo()
         {
-            throw new NotImplementedException();
+            using (var b = new TestBucket())
+            {
+                var r = await b.UploadFile();
+                var f = await b.GetFileInfo(r.fileId);
+                Assert.IsNotNull(f.fileName);
+            }
         }
 
         /// <summary>
@@ -248,7 +287,11 @@ namespace com.wibblr.b2
         [Test]
         public async Task GetUploadUrl()
         {
-            throw new NotImplementedException();
+            using (var b = new TestBucket())
+            {
+                var r = await b.GetUploadUrl();
+                Assert.IsNotNull(r.uploadUrl);
+            }
         }
 
         /// <summary>
@@ -258,7 +301,22 @@ namespace com.wibblr.b2
         [Test]
         public async Task HideFile()
         {
-            throw new NotImplementedException();
+            using (var b = new TestBucket())
+            {
+                var u0 = await b.UploadFile("file", "content0");
+                var u1 = await b.UploadFile("file", "content1");
+                var v = await b.ListFileVersions();
+
+                Assert.AreEqual(2, v.files.Count);
+                Assert.AreEqual(u0.fileName, v.files[0].fileName);
+                Assert.AreEqual(u1.fileName, v.files[1].fileName);
+
+                var h = await b.HideFile(u0.fileName);
+
+                v = await b.ListFileVersions();
+
+                Assert.AreEqual(1, v.files.Count);
+            }
         }
 
         /// <summary>

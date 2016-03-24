@@ -116,7 +116,7 @@ namespace com.wibblr.b2
         /// read only if the response status code is not 200 (OK)</param>
         public void ThrowIfFailure(HttpResponseMessage response, Stream body)
         {
-            if (response.StatusCode != HttpStatusCode.OK)
+            if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.PartialContent)
             {
                 FailureResponse f = null;
                 try

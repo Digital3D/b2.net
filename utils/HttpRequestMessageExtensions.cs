@@ -87,8 +87,13 @@ namespace com.wibblr.utils
         /// <returns></returns>
         public static HttpRequestMessage WithRange(this HttpRequestMessage message, long? lower, long? upper)
         {
-            if (lower.HasValue && upper.HasValue)
-                message.Headers.Add("Range", $"bytes={lower.Value}-{upper.Value}");
+            if (lower.HasValue || upper.HasValue)
+            {
+                var strLower = lower.HasValue ? lower.Value.ToString() : "";
+                var strUpper = upper.HasValue ? upper.Value.ToString() : "";
+
+                message.Headers.Add("Range", $"bytes={strLower}-{strUpper}");
+            }
             return message;
         }
     }
