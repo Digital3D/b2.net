@@ -38,10 +38,16 @@ namespace com.wibblr.b2
         }
 
         [Test]
-        public void ReadCredentialsTest()
+        public void ShouldReadCredentialsFromFile()
         {
             using (var t = new TempDirectory())
             {
+                foreach (var v in new[] { "B2_ACCOUNT_ID", "B2_APPLICATION_KEY" })
+                {
+                    Environment.SetEnvironmentVariable(v, null);
+                    Assert.IsNull(Environment.GetEnvironmentVariable(v));
+                }
+
                 var path = Path.Combine(t.FullPath, "credentials.json");
 
                 File.WriteAllText(path, ToJson("1", "2"));
@@ -65,7 +71,27 @@ namespace com.wibblr.b2
         }
 
         [Test]
-        public void DeleteCredentialsTest()
+        public void ShouldReadCredentialsFromEnvironmentVariables()
+        {
+            using (var t = new TempDirectory())
+            {
+                var path = Path.Combine(t.FullPath, "credentials.json");
+
+                File.WriteAllText(path, ToJson("1", "2"));
+                var c = Credentials.Read(path);
+                Assert.AreEqual("1", c.accountId);
+                Assert.AreEqual("2", c.applicationKey);
+
+                Environment.SetEnvironmentVariable("B2_ACCOUNT_ID", "3");
+                Environment.SetEnvironmentVariable("B2_APPLICATION_KEY", "4");
+                c = Credentials.Read();
+                Assert.AreEqual("3", c.accountId);
+                Assert.AreEqual("4", c.applicationKey);
+            }
+        }
+
+        [Test]
+        public void ShouldDeleteFile()
         {
             using (var t = new TempDirectory())
             {
@@ -77,6 +103,17 @@ namespace com.wibblr.b2
 
                 Credentials.Delete(path);
                 Assert.IsFalse(File.Exists(path));
+            }
+        }
+
+        [Test]
+        public void ShouldNotThrowOnDeleteOfMissingFile()
+        {
+            using (var t = new TempDirectory())
+            {
+                var path = Path.Combine(t.FullPath, "credentials.json");
+                Assert.IsFalse(File.Exists(path));
+                Credentials.Delete(path);
             }
         }
     }
