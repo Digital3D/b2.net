@@ -40,7 +40,17 @@ namespace com.wibblr.b2.console
                 catch (Exception e)
                 {
                     Console.Error.WriteLine(e.Message);
+                    while (e.InnerException != null)
+                    {
+                        Console.Error.WriteLine(e.InnerException.Message);
+                        e = e.InnerException;
+                    }
+
                     rc = 1;
+
+#if DEBUG
+                    Console.ReadLine();
+#endif
                 }
             }
             return rc;

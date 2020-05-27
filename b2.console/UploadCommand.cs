@@ -123,6 +123,13 @@ namespace com.wibblr.b2.console
                 var task = b2.UploadFile(file.Info.FullName, file.RelativePath.ToUnixPath());
                 tasks[task] = file.Info.FullName;
             }
+
+            //wait when finish
+            foreach (KeyValuePair<Task, string> pair in tasks)
+            {
+                pair.Key.Wait();
+            }
+            
             return 0;
         }
     }

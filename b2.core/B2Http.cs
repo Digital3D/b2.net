@@ -24,7 +24,7 @@ namespace com.wibblr.b2
         public string contentType;
         public string sha1;
         public Dictionary<string, string> attributes = new Dictionary<string, string>();
-
+        public const string _version = "v2";
         public B2File(Stream responseStream, HttpHeaders headers, HttpContentHeaders contentHeaders)
         {
             content = responseStream;
@@ -49,7 +49,7 @@ namespace com.wibblr.b2
     {
         private ILog log = LogManager.GetLogger("com.wibblr.B2Http");
 
-        private const string BaseUrl = "https://api.backblaze.com/b2api/v1";
+        private const string BaseUrl = "https://api.backblazeb2.com/b2api/v2/";
 
         private HttpClient httpClient;
 
@@ -167,7 +167,7 @@ namespace com.wibblr.b2
         {
             Trace(() => $"CreateBucket: apiUrl={apiUrl}, authorizationToken={authorizationToken}, accountId={accountId}, bucketName={bucketName}, bucketType={bucketType}");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_create_bucket")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v2/b2_create_bucket")
                 .WithAuthorization(authorizationToken)
                 .WithJsonSerializedContent(new CreateBucketRequest { accountId = accountId, bucketName = bucketName, bucketType = bucketType });
 
@@ -192,7 +192,7 @@ namespace com.wibblr.b2
         {
             Trace(() => $"DeleteBucket: apiUrl={apiUrl}, authorizationToken={authorizationToken}, accountId={accountId}, bucketId={bucketId}");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_delete_bucket")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v2/b2_delete_bucket")
                 .WithAuthorization(authorizationToken)
                 .WithJsonSerializedContent(new DeleteBucketRequest { accountId = accountId, bucketId = bucketId });
 
@@ -217,7 +217,7 @@ namespace com.wibblr.b2
         {
             Trace(() => $"DeleteFileVersion: apiUrl={apiUrl}, authorizationToken={authorizationToken}, fileName={fileName}, fileId={fileId}");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_delete_file_version")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v2/b2_delete_file_version")
                 .WithAuthorization(authorizationToken)
                 .WithJsonSerializedContent(new DeleteFileVersionRequest { fileName = fileName, fileId = fileId });
 
@@ -243,7 +243,7 @@ namespace com.wibblr.b2
         {
             Trace(() => $"DownloadFileById: downloadUrl={downloadUrl}, authorizationToken={authorizationToken}, fileId={fileId}, rangeLower={rangeLower}, rangeUpper={rangeUpper}");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{downloadUrl}/b2api/v1/b2_download_file_by_id")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{downloadUrl}/b2api/v2/b2_download_file_by_id")
                .WithAuthorization(authorizationToken)
                .WithJsonSerializedContent(new DownloadFileByIdRequest { fileId = fileId })
                .WithRange(rangeLower, rangeUpper);
@@ -296,7 +296,7 @@ namespace com.wibblr.b2
         public async Task<GetFileInfoResponse> GetFileInfo(string apiUrl, string authorizationToken, string fileId) {
             Trace(() => $"GetFileInfo: apiUrl={apiUrl}, authorizationToken={authorizationToken}, fileId={fileId}");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_get_file_info")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v2/b2_get_file_info")
                 .WithAuthorization(authorizationToken)
                 .WithJsonSerializedContent(new GetFileInfoRequest { fileId = fileId });
 
@@ -322,7 +322,7 @@ namespace com.wibblr.b2
         {
             Trace(() => $"GetUploadUrl: apiUrl={apiUrl}, authorizationToken={authorizationToken}, bucketId={bucketId}");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_get_upload_url")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v2/b2_get_upload_url")
                 .WithAuthorization(authorizationToken)
                 .WithJsonSerializedContent(new GetUploadUrlRequest { bucketId = bucketId });
 
@@ -347,7 +347,7 @@ namespace com.wibblr.b2
         {
             Trace(() => $"HideFile: apiUrl={apiUrl}, authorizationToken={authorizationToken}, bucketId={bucketId}, fileName={fileName}");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_hide_file")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v2/b2_hide_file")
                 .WithAuthorization(authorizationToken)
                 .WithJsonSerializedContent(new HideFileRequest { bucketId = bucketId, fileName = fileName });
 
@@ -371,7 +371,7 @@ namespace com.wibblr.b2
         {
             Trace(() => $"ListBuckets: apiUrl={apiUrl}, authorizationToken={authorizationToken}, accountId={accountId}");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_list_buckets")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v2/b2_list_buckets")
                 .WithAuthorization(authorizationToken)
                 .WithJsonSerializedContent(new ListBucketsRequest { accountId = accountId });
 
@@ -395,7 +395,7 @@ namespace com.wibblr.b2
         {
             Trace(() => $"ListFileNames: apiUrl={apiUrl}, authorizationToken={authorizationToken}, bucketId={bucketId}, startFileName={startFileName}, maxFileCount={maxFileCount}");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_list_file_names")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v2/b2_list_file_names")
                 .WithAuthorization(authorizationToken)
                 .WithJsonSerializedContent(new ListFileNamesRequest { bucketId = bucketId, startFileName = startFileName, maxFileCount = maxFileCount });
 
@@ -422,7 +422,7 @@ namespace com.wibblr.b2
         {
             Trace(() => $"ListFileVersions: apiUrl={apiUrl}, authorizationToken={authorizationToken}, bucketId={bucketId}, startFileName={startFileName}, maxFileCount={maxFileCount}");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_list_file_versions")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v2/b2_list_file_versions")
                 .WithAuthorization(authorizationToken)
                 .WithJsonSerializedContent(new ListFileNamesRequest { bucketId = bucketId, startFileName = startFileName, maxFileCount = maxFileCount });
 
@@ -455,7 +455,7 @@ namespace com.wibblr.b2
         {
             Trace(() => $"UpdateBucket: apiUrl={apiUrl}, authorizationToken={authorizationToken}, bucketId={bucketId}, bucketType={bucketType}");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v1/b2_update_bucket")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{apiUrl}/b2api/v2/b2_update_bucket")
                 .WithAuthorization(authorizationToken)
                 .WithJsonSerializedContent(new UpdateBucketRequest { accountId = accountId, bucketId = bucketId, bucketType = bucketType });
 

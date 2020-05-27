@@ -10,7 +10,7 @@ namespace com.wibblr.b2
         public string accountId = "";
         public string applicationKey = "";
 
-        public static string DefaultCredentialsPath() => Path.Combine(Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%"), ".b2.net", "credentials.json");
+        public static string DefaultCredentialsPath() => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".b2.net", "credentials.json");
 
         private static Credentials ReadFromEnvironment()
         {
@@ -25,7 +25,10 @@ namespace com.wibblr.b2
 
         private static Credentials ReadFromFile(string path = null)
         {
+
+
             var f = path ?? DefaultCredentialsPath();
+
             try
             {
                 using (var s = new FileStream(f, FileMode.Open))
@@ -69,6 +72,10 @@ namespace com.wibblr.b2
         /// <param name="path">File to write credentials to. Defaults to ~\.b2.net\credentials.json</param>
         public static void Write(string accountId, string applicationKey, string path = null)
         {
+            Directory.CreateDirectory(Directory.GetParent(Path.GetFullPath(DefaultCredentialsPath())).FullName);
+            if (!File.Exists(DefaultCredentialsPath()))
+                File.CreateText(DefaultCredentialsPath()).Close();
+
             var f = path ?? DefaultCredentialsPath();
             var c = new Credentials { accountId = accountId ?? "", applicationKey = applicationKey ?? "" };
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -33,7 +34,7 @@ namespace com.wibblr.utils
         public static HttpRequestMessage WithAuthorization(this HttpRequestMessage message, string value)
         {
             if (value != null)
-                message.Headers.Authorization = new AuthenticationHeaderValue(value);
+                message.Headers.TryAddWithoutValidation("Authorization", value);
             return message;
         }
 
