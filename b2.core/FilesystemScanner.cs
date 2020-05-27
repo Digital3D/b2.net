@@ -13,9 +13,12 @@ namespace com.wibblr.b2
         public FileSystemInfo Info { get; private set; }
         public string RelativePath { get; private set; } = "";
 
+        public long Length { get; private set; }
+
         public ScannedFileSystemInfo(FileSystemInfo info, ScannedFileSystemInfo parent = null)
         {
             Info = info;
+            Length = new FileInfo(info.FullName).Length;
             RelativePath = (parent == null) 
                 ? info.Name
                 : Path.Combine(parent.RelativePath, info.Name);            

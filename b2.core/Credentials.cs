@@ -94,7 +94,10 @@ namespace com.wibblr.b2
             var f = path ?? DefaultCredentialsPath();
 
             if (File.Exists(f))
+            {
                 File.Delete(f);
+                Console.WriteLine("Credentials deleted.");
+            }
         }
     }
 }

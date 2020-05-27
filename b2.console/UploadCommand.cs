@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using CommandLine;
@@ -50,8 +52,9 @@ namespace com.wibblr.b2.console
         /// 
         /// </summary>
         /// <param name="args"></param>
+        /// <param name="largeFile"></param>
         /// <returns></returns>
-        public int Run(string[] args)
+        public async Task<int> Run(string[] args, bool largeFile = false)
         {
             var options = new Options();
 
@@ -75,9 +78,12 @@ namespace com.wibblr.b2.console
                 throw new Exception("No source specified");
 
             if (options.Destination == null)
-                throw new Exception("No destination specified");
+                options.Destination = "/";
 
-            return UploadFiles(options);
+            if(!largeFile)
+                return await UploadFiles(options);
+
+            return await UploadLargeFile(options);
         }
 
         /// <summary>
@@ -85,52 +91,99 @@ namespace com.wibblr.b2.console
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
-        internal int UploadFiles(Options options) {
+        private async Task<int> UploadFiles(Options options) {
             var b2 = new B2();
             b2.Login(options.AccountId, options.ApplicationKey, options.BucketName).Wait();
+            b2.OnLargeFileUploadProgress += OnLargeFileUploadProgress;
 
             var scannedFiles = FilesystemScanner.Scan(options.Source, options.Recursive);
+            Progress<StreamProgress> progress = new Progress<StreamProgress>();
+            progress.ProgressChanged += Progress_ProgressChanged;
 
             var tasks = new Dictionary<Task, string>();
 
             foreach (var file in scannedFiles)
             {
-                while (tasks.Count >= options.SimultaneousConnections)
+                if (file.Length < 100 * (1000 * 1000))
                 {
-                    var tempTasks = tasks.Keys.ToArray();
-                    var i = Task.WaitAny(tempTasks);
-                    if (i >= 0)
+                    while (tasks.Count >= options.SimultaneousConnections)
                     {
-                        var completedTask = tempTasks[i];
-                        var path = tasks[completedTask];
-                        if (completedTask.IsFaulted || completedTask.IsCanceled)
+                        var tempTasks = tasks.Keys.ToArray();
+                        var i = Task.WaitAny(tempTasks);
+                        if (i >= 0)
                         {
-                            var error = "Unknown error";
-                            if (completedTask.Exception != null)
+                            var completedTask = tempTasks[i];
+                            var path = tasks[completedTask];
+                            if (completedTask.IsFaulted || completedTask.IsCanceled)
                             {
-                                error = completedTask.Exception.Message;
-                                if (completedTask.Exception.InnerException != null)
-                                    error = completedTask.Exception.InnerException.Message;
+                                var error = "Unknown error";
+                                if (completedTask.Exception != null)
+                                {
+                                    error = completedTask.Exception.Message;
+                                    while (completedTask.Exception.InnerException != null)
+                                        error += "\r\n" + completedTask.Exception.InnerException.Message;
+                                }
+
+                                Console.Error.WriteLine(path + ": " + error);
                             }
-                            Console.Error.WriteLine(path + ": " + error);
+                            else
+                                Console.WriteLine(path);
+
+                            tasks.Remove(completedTask);
                         }
-                        else
-                            Console.WriteLine(path);
-
-                        tasks.Remove(completedTask);
                     }
-                }
-                var task = b2.UploadFile(file.Info.FullName, file.RelativePath.ToUnixPath());
-                tasks[task] = file.Info.FullName;
-            }
 
-            //wait when finish
-            foreach (KeyValuePair<Task, string> pair in tasks)
-            {
-                pair.Key.Wait();
+                    await b2.UploadFile(file.Info.FullName, file.RelativePath.ToUnixPath(), "application/octet-stream", null, progress);
+                }
+                else
+                {
+                    Console.WriteLine($"File too large than 100Mb detected, use UploadLargeFile instead of normal upload - file name => {file.Info.Name}");
+                    await UpLargeFile(file, b2);
+                }
             }
             
             return 0;
+        }
+
+        private async Task<int> UploadLargeFile(Options options)
+        {
+            var b2 = new B2();
+            b2.Login(options.AccountId, options.ApplicationKey, options.BucketName).Wait();
+
+            var scannedFiles = FilesystemScanner.Scan(options.Source, options.Recursive);
+
+            foreach (var file in scannedFiles)
+            {
+                await UpLargeFile(file, b2);
+            }
+
+            return 0;
+        }
+
+        private async Task UpLargeFile(ScannedFileSystemInfo file, B2 b2)
+        {
+            if (file.Length >= 100 * (1000 * 1000))
+            {
+                Console.WriteLine("Wait...Upload large file => " +file.Info.Name);
+                string result = await b2.UploadLargeFile(b2.BucketId, file.Info.Name, b2.ApiUrl, b2.AuthorizationToken);
+                string fileId = Regex.Match(result, "fileId\": \"(.*?)\"").Groups[1].Value;
+                string partUrl = await b2.UploadLargeFilePartUrl(fileId, b2.ApiUrl, b2.AuthorizationToken);
+                string uploadUrl = Regex.Match(partUrl, "uploadUrl\": \"(.*?)\"").Groups[1].Value;
+                string authorizationToken = Regex.Match(partUrl, "authorizationToken\": \"(.*?)\"").Groups[1].Value;
+                ArrayList result3 = await b2.UploadPartOfFile(file.Info.FullName, uploadUrl, authorizationToken);
+                await b2.LargeFileUploadFinished(fileId, b2.ApiUrl, b2.AuthorizationToken, result3);
+                Console.WriteLine($"File {file.Info.Name} Uploaded!");
+            }
+        }
+
+        private void OnLargeFileUploadProgress(long totalBytesSent, long localFileSize, string partNumber)
+        {
+            Console.WriteLine($"{((totalBytesSent / 1024) / 1024):0}Mb sent on {((localFileSize / 1024) / 1024):0}Mb - sha1:{partNumber}");
+        }
+
+        private void Progress_ProgressChanged(object sender, StreamProgress e)
+        {
+            Console.WriteLine($"{e.progress:0.00}% - {(e.bytesPerSecond * 1024):0.00}Mb");
         }
     }
 }

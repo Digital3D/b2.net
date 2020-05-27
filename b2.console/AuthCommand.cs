@@ -51,9 +51,6 @@ namespace com.wibblr.b2.console
 
             if (options.Delete)
             {
-                if (options.AccountId != null || options.ApplicationKey != null)
-                    throw new Exception("Delete option cannot be combined with account or appkey options.");
-
                 Credentials.Delete(options.Path);
             }
             else if (options.AccountId != null || options.ApplicationKey != null)

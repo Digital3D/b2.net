@@ -7,8 +7,9 @@ namespace com.wibblr.b2.console
     {
         public static void Usage()
         {
-            Console.WriteLine("Usage: b2 help|auth|upload, or 'b2 auth|upload help' for help with subcommands");
-        }
+            Console.WriteLine(@"Usage: b2 auth | upload | uploadLargeFile [source|file] [destination]
+                                    or 'b2 auth|upload|uploadLargeFile help' for help with subcommands");
+                                }
 
         public static void Main(string[] args)
         {
@@ -33,7 +34,9 @@ namespace com.wibblr.b2.console
                     if ("auth" == args[0])
                         rc = new AuthCommand().Run(subArgs);
                     else if ("upload" == args[0])
-                        rc = new UploadCommand().Run(subArgs);
+                        rc = new UploadCommand().Run(subArgs).GetAwaiter().GetResult();
+                    else if ("uploadLargeFile" == args[0])
+                        rc = new UploadCommand().Run(subArgs, true).GetAwaiter().GetResult();
                     else if ("help" == args[0])
                         Usage();
                 }
@@ -48,11 +51,14 @@ namespace com.wibblr.b2.console
 
                     rc = 1;
 
-#if DEBUG
-                    Console.ReadLine();
-#endif
                 }
             }
+
+
+#if DEBUG
+            Console.ReadLine();
+#endif
+
             return rc;
         }
     }
