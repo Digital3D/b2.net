@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="AuthCommand.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="DownloadCommand.cs" />
     <Compile Include="UploadCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -66,6 +67,9 @@
       <Project>{38d86d8b-603e-471e-9a53-c6952e862ff0}</Project>
       <Name>utils</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ReadMe.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
