@@ -315,15 +315,43 @@ namespace com.wibblr.b2
                         json = reader.ReadToEnd();
                     }
                 }
+
+                Console.WriteLine("ERROR: " + json);
             }
             catch (Exception e)
             {
-                json = e.Message;
+                if (e is B2Exception)
+                {
+                    B2Exception b2ex = (B2Exception)e;
+                    if (!string.IsNullOrEmpty(b2ex.Message))
+                        Console.Error.WriteLine(b2ex.Message);
+                    Console.Error.WriteLine(b2ex.ErrorCode);
+                    json = b2ex.ErrorCode;
+                }
+                else
+                    Console.Error.WriteLine(e.Message);
+
                 while (e.InnerException != null)
                 {
-                    json += "\r\n" + e.InnerException.Message;
+                    if (e.InnerException is B2Exception)
+                    {
+                        B2Exception b2ex = (B2Exception)e.InnerException;
+                        if (!string.IsNullOrEmpty(b2ex.Message))
+                            Console.Error.WriteLine(b2ex.Message);
+                        Console.Error.WriteLine(b2ex.ErrorCode);
+                        json = b2ex.ErrorCode;
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(e.InnerException.Message))
+                            Console.Error.WriteLine(e.InnerException.Message);
+                        json = e.InnerException.Message;
+                    }
+
                     e = e.InnerException;
                 }
+
+                Console.WriteLine("ERROR: " + json);
             }
 
             return json;
